@@ -78,11 +78,11 @@ def apply_and_pr(fork: str, upstream: str, branch: str, code_file: str, message:
         # Create branch
         subprocess.run(["git", "-C", tmpdir, "checkout", "-b", branch], capture_output=True, check=True)
 
-        # Copy winning code to target file
+        # Copy winning code to target file with strict path safety checks
         import shutil
-        dest = os.path.realpath(os.path.join(tmpdir, target_file))
-        allowed = os.path.realpath(tmpdir)
-        if not dest.startswith(allowed):
+        abs_tmpdir = os.path.realpath(tmpdir)
+        dest = os.path.realpath(os.path.join(abs_tmpdir, target_file))
+        if not dest.startswith(abs_tmpdir + os.sep) and dest != abs_tmpdir:
             raise ValueError(f"目标文件路径不在允许的目录中: {target_file}")
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         shutil.copy2(code_file, dest)
@@ -99,7 +99,7 @@ def apply_and_pr(fork: str, upstream: str, branch: str, code_file: str, message:
         "base": "main",
         "body": f"🤖 由 bounty-plaza 自动提交\n\n此修复由 bounty-plaza 贡献者完成，已通过自动评分（≥90 分）。",
     })
-    print(f"  PR 已创建: {pr.get('html_url', '?')}")
+    print(f"  PR 已创建: {pr.get('html_url', '?' )}")
     return pr.get("number")
 
 
